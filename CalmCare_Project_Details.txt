@@ -1,0 +1,124 @@
+==============================================================================
+                    CALMCARE - PROJECT DETAILS & DOCUMENTATION
+==============================================================================
+
+PROJECT NAME: CalmCare (Wellness Journey for Healthcare Professionals)
+WORKSPACE PATH: c:\Users\aksha\OneDrive\Projects\CalmCare-main
+GITHUB REPOSITORY: https://github.com/akshataik05/CalmCare.git
+
+------------------------------------------------------------------------------
+1. OVERVIEW & PURPOSE
+------------------------------------------------------------------------------
+CalmCare is an advanced wellness and cognitive support application designed 
+specifically for healthcare professionals dealing with stress, burnout, and 
+emotional exhaustion. It serves as a "Cognitive Digital Twin" that tracks 
+stress levels, predicts burnout risk, offers evidence-based micro-interventions, 
+and provides a safe space for mental health exercises and peer communication.
+
+------------------------------------------------------------------------------
+2. TECH STACK
+------------------------------------------------------------------------------
+* Core Framework: React (v19.2.0)
+* Language: TypeScript (v5.8.2)
+* Build Tool & Dev Server: Vite (v6.2.0)
+* Styling: Vanilla CSS & Tailwind CSS classes with premium glassmorphism dark mode
+* Icons: Lucide React (v0.555.0)
+* Data Visualization: Recharts (v3.5.1)
+* AI Integration:
+  - Official SDK: @google/genai (v1.30.0)
+  - Active Model: gemini-flash-latest (Gemini 1.5 Flash)
+  - Server Proxy: Vite Dev Server Proxy (routing through /api)
+
+------------------------------------------------------------------------------
+3. APPLICATION ARCHITECTURE & FLOW
+------------------------------------------------------------------------------
+Vite Dev Server (localhost:3000)
+ ├── Serves React SPA (App.tsx)
+ ├── /api Proxy Target -> https://generativelanguage.googleapis.com
+ └── Proxy Customizations:
+     ├── Strips 'origin' and 'referer' headers to bypass Google's API restrictions.
+     └── Rewrites '/api' -> '/' before hitting the Google API.
+
+Browser Client (@google/genai SDK)
+ ├── Uses process.env.API_KEY injected at build time from .env.local
+ ├── Routes requests to window.location.origin + '/api' to bypass CORS
+ └── Interacts with default model: 'gemini-flash-latest'
+
+------------------------------------------------------------------------------
+4. CORE FEATURES & MODULES
+------------------------------------------------------------------------------
+[A] CalmCare Buddy (Live Chat)
+  * Persona Options: Empathetic, Professional, Friendly, Stoic.
+  * Tone Options: Casual, Formal.
+  * Verbosity: Concise, Balanced, Detailed.
+  * Features: Conversational wellness assistant, conversation summarization, 
+    and event logging.
+
+[B] AI Intelligence Center (AI Agent)
+  * AI Medical Translator: Translates complex clinical reports/term definitions 
+    to selected target languages, simplifying terminology for patients.
+  * Stress Predictor: Heuristical stress level predictor taking biometric data 
+    (step count) and environmental conditions (temperature/humidity).
+
+[C] Burnout Predictor
+  * Input parameters: Work hours per shift, average heart rate (bpm), patients 
+    seen per shift, and hours of sleep.
+  * Visualization: Interactive horizontal bar chart illustrating contributing 
+    factors (High Workload, Patient Load, Physiological Strain, Poor Recovery) 
+    using Recharts.
+  * Recommender: Offers personalized, actionable recovery tips based on the 
+    highest contributing stressor.
+
+[D] Cognitive & Wellness Tools
+  * Emotion Wheel: Step-by-step emotional journal (Primary -> Secondary -> 
+    Intensity -> Cause) that logs entries to local storage, automatically 
+    populating the Dashboard's Emotion Analysis chart.
+  * Cognitive Reframing: Interactive flashcard challenge where users identify 
+    distortions (Automatic Negative Thoughts) and type balanced reframes.
+  * Mood Booster: POSITIVITY HUB offering inspirational caregiver quotes and 
+    gratitude journaling prompts.
+  * Calm Tales: Premium eBook-style library with categorized soothing stories 
+    (Calm, Wholesome, Funny, Motivating).
+  * Cognitive Mini-Games: Concentrative puzzles including Sudoku, Mini Crosswords, 
+    Riddle Me This, Mindful Tap, Memory Match, and Tic Tac Toe.
+
+[E] Peer Support
+  * Connection network matching users with virtual peers (ICU Nurses, ER 
+    Physicians, etc.) for simulated peer support chat using the Gemini API.
+
+------------------------------------------------------------------------------
+5. RESOLVED ISSUES & BUG RESOLUTIONS
+------------------------------------------------------------------------------
+Issue 1: Live Chat & AI Agent Translation Failing (CORS / Proxy Issue)
+  * Cause: Browser client requests to Google APIs contain browser-specific 
+    headers (Origin, Referer). Google's API rejects requests containing these 
+    headers from unauthorized domains (like localhost:3000), resulting in blocks.
+  * Fix: Added a `configure` hook in the Vite proxy configuration to strip the 
+    `origin` and `referer` headers from the proxy request. This forces Google's 
+    API to handle it as a standard server-to-server transaction.
+
+Issue 2: Live Chat Quota Limit Exceeded (HTTP 429 Error)
+  * Cause: The API key has a quota limit of 0 on the free tier for Gemini 2.0 
+    models (`gemini-2.0-flash` & `gemini-2.0-flash-lite`), resulting in immediate 
+    429 errors.
+  * Fix: Reconfigured the default model in constants.ts to use `gemini-flash-latest` 
+    (Gemini 1.5 Flash), which is active and fully functional on this key.
+
+Issue 3: Burnout Predictor Page Crashed (TypeError: Cannot read properties of undefined)
+  * Cause: Recharts rendering and top-stressor reduction logic threw exceptions 
+    when the Gemini API returned empty or malformed factors.
+  * Fix: 
+    - Isolated result rendering in a safe subcomponent (`BurnoutResultView`) 
+      utilizing optional chaining (`?.`) and safe array reduction.
+    - Added an empty-factors fallback checklist so that if the API fails, the 
+      app falls back to showing equal-weighted factors rather than a blank chart.
+    - Wrapped the Burnout page route in App.tsx with a React `ErrorBoundary` to 
+      isolate render errors.
+
+------------------------------------------------------------------------------
+6. SECURITY COMPLIANCE
+------------------------------------------------------------------------------
+* All sensitive API credentials are kept out of Git.
+* The API key is stored locally in `.env.local` which is matched by `.gitignore` 
+  (*.local).
+==============================================================================
